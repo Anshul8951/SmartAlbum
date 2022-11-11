@@ -7,22 +7,22 @@ phases:
       - echo "Installing dependencies..."
       - aws cloudformation package --template-file lambda-cf.yaml --s3-bucket cloudformation-lexlambda-ansh --output-template-file output2.yaml
       
-  build:
-    commands:
-      - echo "Zipping deployment package..."
-      - mv search-photos.py lambda_function.py
-      - zip -g deployment_package_1.zip lambda_function.py
-      - mv lambda_function.py search-photos.py
-      - mv index-photos.py lambda_function.py
-      - zip -g deployment_package_2.zip lambda_function.py
-      - mv lambda_function.py index-photos.py
+  # build:
+  #   commands:
+  #     - echo "Zipping deployment package..."
+  #     - mv search-photos.py lambda_function.py
+  #     - zip -g deployment_package_1.zip lambda_function.py
+  #     - mv lambda_function.py search-photos.py
+  #     - mv index-photos.py lambda_function.py
+  #     - zip -g deployment_package_2.zip lambda_function.py
+  #     - mv lambda_function.py index-photos.py
 
-  post_build:
-    commands:
-      - echo "Updating lambda Functions..."
-      - aws lambda update-function-code --function-name search-photos --zip-file fileb://deployment_package_1.zip
-      - aws lambda update-function-code --function-name index-photos --zip-file fileb://deployment_package_2.zip
-      - echo "DONE!!"
+  # post_build:
+  #   commands:
+  #     - echo "Updating lambda Functions..."
+  #     - aws lambda update-function-code --function-name search-photos --zip-file fileb://deployment_package_1.zip
+  #     - aws lambda update-function-code --function-name index-photos --zip-file fileb://deployment_package_2.zip
+  #     - echo "DONE!!"
 artifacts:
   type: zip
   files:
