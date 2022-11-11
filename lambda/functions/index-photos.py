@@ -3,7 +3,7 @@ import boto3
 import urllib.parse
 import requests
 import base64
-#from requests_aws4auth import AWS4Auth
+#from requests_aws4auth import AWS4Auh
 
 #hey testing new changes
 # credentials = boto3.Session().get_credentials()
