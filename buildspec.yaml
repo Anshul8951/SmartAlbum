@@ -3,6 +3,7 @@ phases:
   install:
     commands:
       - aws cloudformation package --template-file frontend.yaml --s3-bucket cloudformation-lexlambda-ansh --output-template-file output.yaml
+      - ls
       - aws cloudformation package --template-file uploadToS3.json --s3-bucket smartphotoalbumui2-ansh --output-template-file packaged-template.json --use-json
 artifacts:
   type: zip
