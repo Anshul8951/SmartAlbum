@@ -122,10 +122,10 @@ Resources:
     Properties:
       Handler: index-photos.lambda_handler
       Runtime: python3.7
-      CodeUri: ./lambdas/functions/
+      CodeUri: ./lambda/functions/
   LF2Function:
     Type: AWS::Serverless::Function
     Properties:
       Handler: search-photos.lambda_handler
       Runtime: python3.7
-      CodeUri: ./lambdas/functions/
+      CodeUri: ./lambda/functions/
