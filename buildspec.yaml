@@ -4,8 +4,9 @@ phases:
     commands:
       - aws cloudformation package --template-file frontend.yaml --s3-bucket cloudformation-lexlambda-ansh --output-template-file output.yaml
       - ls
-    build:
       - aws s3 sync ./frontend/ "s3://smartphotoalbumui2-ansh"
+    # build:
+      # - aws s3 sync ./frontend/ "s3://smartphotoalbumui2-ansh"
 
 artifacts:
   type: zip
