@@ -9,7 +9,7 @@ phases:
       
   build:
     commands:
-      - echo "Zipping deployment package..."
+      - echo "Zipping deployment package...."
       - mv lambda/functions/search-photos.py lambda_function.py
       - zip -g deployment_package_1.zip lambda_function.py
       - mv lambda_function.py search-photos.py
