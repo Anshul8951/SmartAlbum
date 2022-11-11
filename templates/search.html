@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" type="text/css" href="../static/styles.css">
+</head>
+
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/axios/dist/axios.standalone.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/CryptoJS/rollups/hmac-sha256.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/CryptoJS/rollups/sha256.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/CryptoJS/components/hmac.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/CryptoJS/components/enc-base64.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/url-template/url-template.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/apiGatewayCore/sigV4Client.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/apiGatewayCore/apiGatewayClient.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/apiGatewayCore/simpleHttpClient.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/apiGatewayCore/utils.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/apigClient.js"></script>
+
+
+<body>
+    <div class="topnav">
+        <a href="welcome.html">Home</a>
+        <a class="active" href="search.html">Search</a>
+        <a href="upload.html">Upload</a>
+    </div>   
+
+    <div class="welcome center">Search</div>
+
+    <!-- <form action="https://9egv53y2c5.execute-api.us-east-1.amazonaws.com/v5/search" method="get" style="border: none;"> -->
+      <div class="feedcontainer">
+        <label for="search"><b>Search Query</b></label>
+
+        <div style="display: flex;">
+          <input type="text" id="myQuery" name="search" value="" required>
+          <button type="button" onclick=startTranscribing()> <img src="../static/microphone-favicon.png" height ="30" width="30" />
+            <i id="mic_search" style="width:none; flex-basis: 50px" onclick=startTranscribing()>mic</i>
+          </button>
+        </div>
+
+        <!-- <button type="submit">Search</button> -->
+        <button id="mySearchButton" >Search</button>
+          
+      </div>
+    <!-- </form> -->
+
+    <div class="feedcontainer">
+        <label for="results"><b>Results</b></label>
+        <p id="demo"></p>
+    </div>
+
+    <script>
+      console.log('Running Script');
+    
+      const startTranscribing = () => {
+
+
+        window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+        const recognition = new window.SpeechRecognition();
+
+        if ('SpeechRecognition' in window) {
+          console.log("SpeechRecognition is Working");
+        } else {
+          console.log("SpeechRecognition is Not Working");
+        }
+
+        var inputSearchQuery = document.getElementById("myQuery");
+        
+        //recognition.continuous = true;
+
+        var micButton = document.getElementById("mic_search");  
+
+        if (micButton.innerHTML == "mic") {
+            console.log("Mic Started");
+            recognition.start();
+        } else if (micButton.innerHTML == "mic_off"){
+            console.log("Mic Off");
+            recognition.stop();
+        }
+      
+        recognition.addEventListener("start", function() {
+            micButton.innerHTML = "mic_off";
+            console.log("Recording.....");
+        });
+      
+        recognition.addEventListener("end", function() {
+            console.log("Stopping recording.");
+            micButton.innerHTML = "mic";
+        });
+      
+        recognition.addEventListener("result", resultOfSpeechRecognition);
+        function resultOfSpeechRecognition(event) {
+            const current = event.resultIndex;
+            transcript = event.results[current][0].transcript;
+            inputSearchQuery.value = transcript;
+            console.log("transcript : ", transcript)
+        }
+
+
+        // window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+    
+        // let finalTranscript = '';
+        // let recognition = new window.SpeechRecognition();
+    
+        // recognition.interimResults = true;
+        // recognition.maxAlternatives = 10;
+        // recognition.continuous = true;
+    
+        // recognition.onresult = (event) => {
+        //   let interimTranscript = '';
+        //   for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
+        //     let transcript = event.results[i][0].transcript;
+        //     if (event.results[i].isFinal) {
+        //       finalTranscript += transcript;
+        //     } else {
+        //       interimTranscript += transcript;
+        //     }
+        //   }
+        //   document.getElementById('myQuery').value = finalTranscript + interimTranscript;
+        // }
+        // recognition.onaudioend = () => {
+        //     console.log('Audio capturing ended');
+        // }
+        // recognition.start();
+      }
+
+      
+    
+      var sdk = apigClientFactory.newClient({
+        'headers': {
+            'Access-Control-Allow-Headers' : '*',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT'
+        },
+        accessKey: 'AKIAXDVKW4VN6CVGUYHC',
+        secretKey: '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',
+      });
+
+      // var sdk = apigClientFactory.newClient({
+      //   apiKey : 'nhNBzS6ZfU0Hq7fc48QT9sBAIooyNwGaOGA3cDUh'
+      // });
+    
+
+      // async function fetchAsync (url) {
+      //   console.log("Entered fetchAsync");
+      //   let response = await fetch(url);
+      //   let data = await response.json();
+      //   return data;
+      // }
+
+      const search = async () => {
+        let query = document.getElementById("myQuery").value
+        console.log("query", query);
+    
+        // var reader  = new FileReader();
+        // reader.onload = function(e)  {
+        //     var image = document.createElement("img");
+        //     image.src = e.target.result;
+        //     document.body.appendChild(image);
+        // }
+        // var img_response = reader.readAsDataURL(filename);
+        // console.log("img_response", img_response);
+    
+        var params = {
+          'q' : query,
+          'x-api-key' : ''
+        };
+        var response = await sdk.searchGet(params, {}, {})
+    
+        console.log("response", response);
+        data = response['data']
+        console.log("data", data);
+        let text = "";
+    
+        for (let i = 0; i < data.length; i++) {
+          console.log("data[i]", data[i]);
+          const bucket = data[i]['bucket'];
+          const key = data[i]['key'];
+    
+          text += `<img src=${data[i]}> <br> `
+        }
+        document.getElementById("demo").innerHTML = text;
+        console.log("text", text);
+      }
+    
+      let btn = document.getElementById("mySearchButton")
+      console.log("btn", btn);
+    
+    
+      btn.addEventListener('click', async (event) => {
+        console.log("inside event listener");
+        await search();
+        //await fetchAsync("https://ggehfe7tvf.execute-api.us-east-1.amazonaws.com/dev/search?q=Show%20me%20cat")
+      });
+    
+    </script>
+
+</body>

@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: "AWS::Serverless-2016-10-31"
+Description: Cloud formation
+
+Resources:
+# Front-end bucket
+#   S3BUCKET1:
+#     Type: 'AWS::S3::Bucket'
+#     Properties:
+#         BucketName: smartphotoalbumui2
+#         AccessControl: PublicRead
+#         WebsiteConfiguration:
+#           IndexDocument: index.html
+  S3BUCKET1: 
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: smartphotoalbumui2
+      AccessControl: PublicRead
+      CodeUri: ./templates
+      WebsiteConfiguration:
+        IndexDocument: index.html
+
+
+# Photos bucket
+  S3BUCKET2:
+    Type: 'AWS::S3::Bucket'
+    Properties: 
+        BucketName: photostore-rv2
+        AccessControl: Private
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
