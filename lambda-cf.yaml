@@ -4,53 +4,6 @@ Description: Lambda functions using Cloud formation
 
 
 Resources:
-
-#API Gateway
-  RestApiPhotoAlbum:
-    Type: AWS::ApiGateway::RestApi
-    Properties:
-      BodyS3Location:
-        Bucket: 'cloudformation-lexlambda-ansh'
-        Key: 'swagger.yaml'
-      Description: "Rest api having search photos and upload photos methods."
-      Name: RestApiPhotoAlbum
-      FailOnWarnings: true
-      EndpointConfiguration:
-        Types:
-          - "REGIONAL"
-
-# API Gateway Role with policies
-  ApiGatewayAccess:
-      Type: AWS::IAM::Role
-      Properties:
-          Path: /
-          AssumeRolePolicyDocument:
-              Version: 2012-10-17
-              Statement:
-                  - Principal:
-                        Service:
-                            - apigateway.amazonaws.com
-                    Effect: Allow
-                    Action:
-                        - sts:AssumeRole
-          Policies:
-              - PolicyName: s3-put-policy
-                PolicyDocument:
-                    Version: 2012-10-17
-                    Statement:
-                      - Effect: Allow
-                        Action:
-                        - s3:*
-                        - s3-object-lambda:*
-                        Resource: "*"
-          ManagedPolicyArns:
-           - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-           - "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
-
-
-
-
-
 # Lambda Role with policies for function IndexPhotosLambda
   IndexPhotosRole:
             Type: "AWS::IAM::Role"
@@ -159,28 +112,3 @@ Resources:
         Timeout: 300
         TracingConfig:
             Mode: Active
-
-  #PermissionForAPIToLF2
-  PermissionForAPIToLF2:
-    Type: "AWS::Lambda::Permission"
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !GetAtt SearchPhotosLambda.Arn
-      Principal: apigateway.amazonaws.com
-      SourceAccount: !Ref "AWS::AccountId"
-      SourceArn: !Join
-        - ""
-        - - "arn:aws:apigateway:us-east-1::/restapis/"
-          - !Ref RestApiPhotoAlbum
-          - "/resources/*/methods/GET"
-
-  #PermissionForS3ToLF1
-  PermissionForS3ToLF1:
-    Type: "AWS::Lambda::Permission"
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref IndexPhotosLambda
-      Principal: s3.amazonaws.com
-      SourceAccount: !Ref "AWS::AccountId"
-      SourceArn: "arn:aws:s3:::storephotos-ansh1"
-
