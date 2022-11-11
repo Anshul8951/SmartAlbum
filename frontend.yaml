@@ -4,28 +4,28 @@ Description: Cloud formation
 
 Resources:
 # Front-end bucket
-#   S3BUCKET1:
-#     Type: 'AWS::S3::Bucket'
-#     Properties:
-#         BucketName: smartphotoalbumui2
-#         AccessControl: PublicRead
-#         WebsiteConfiguration:
-#           IndexDocument: index.html
-  S3BUCKET1: 
-    Type: AWS::S3::Bucket
+  S3BUCKET1:
+    Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: smartphotoalbumui2
-      AccessControl: PublicRead
-      CodeUri: ./templates
-      WebsiteConfiguration:
-        IndexDocument: index.html
+        BucketName: smartphotoalbumui2-ansh
+        AccessControl: PublicRead
+        WebsiteConfiguration:
+          IndexDocument: index.html
+  # S3BUCKET1: 
+  #   Type: AWS::S3::Bucket
+  #   Properties:
+  #     BucketName: smartphotoalbumui2
+  #     AccessControl: PublicRead
+  #     CodeUri: ./templates
+  #     WebsiteConfiguration:
+  #       IndexDocument: index.html
 
 
 # Photos bucket
   S3BUCKET2:
     Type: 'AWS::S3::Bucket'
     Properties: 
-        BucketName: photostore-rv2
+        BucketName: storephotos-ansh
         AccessControl: Private
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
