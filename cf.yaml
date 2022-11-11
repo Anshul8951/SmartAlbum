@@ -1,9 +1,28 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: "AWS::Serverless-2016-10-31"
-Description: Lambda functions using Cloud formation
-
+Description: Cloud formation
 
 Resources:
+# Front-end bucket
+  S3BUCKET1:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+        BucketName: smartphotoalbumui2-ansh1
+        AccessControl: PublicRead
+        WebsiteConfiguration:
+          IndexDocument: index.html
+
+# Photos buckets
+  S3BUCKET2:
+    Type: 'AWS::S3::Bucket'
+    Properties: 
+        BucketName: storephotos-ansh1
+        AccessControl: Private
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
 
 #API Gateway
   RestApiPhotoAlbum:
@@ -47,10 +66,6 @@ Resources:
            - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
            - "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 
-
-
-
-
 # Lambda Role with policies for function IndexPhotosLambda
   IndexPhotosRole:
             Type: "AWS::IAM::Role"
@@ -72,7 +87,6 @@ Resources:
                 - "arn:aws:iam::aws:policy/AmazonRekognitionFullAccess"
                 - "arn:aws:iam::aws:policy/service-role/AmazonRekognitionServiceRole"
                 - "arn:aws:iam::aws:policy/AmazonRekognitionCustomLabelsFullAccess"
-                - "arn:aws:iam::aws:policy/AmazonOpenSearchServiceFullAccess"
               Policies:
                 - PolicyName: "LambdaPolicy"
                   PolicyDocument:
@@ -91,9 +105,7 @@ Resources:
                           - es:ESHttpPut
                           - es:ESHttpPost
                         Resource: "*"
-
               RoleName: "IndexPhotosRole"
-
 
 # Lambda Role with policies for function SearchPhotosLambda
   SearchPhotosRole:
@@ -127,9 +139,8 @@ Resources:
                     - logs:PutLogEvents
                     Resource:
                     - arn:aws:logs:us-east-1:978364673633:log-group:/aws/lambda/search-photos:*
-        
             RoleName: "SearchPhotosRole"
-  
+
 #Lambda function for index photos
   IndexPhotosLambda:
       Type: AWS::Lambda::Function
@@ -140,7 +151,6 @@ Resources:
           Handler: lambda_function.lambda_handler
           Role: !GetAtt IndexPhotosRole.Arn
           Runtime: python3.7
-          FunctionName: index-photos
           Timeout: 300
           TracingConfig:
               Mode: Active
@@ -155,11 +165,10 @@ Resources:
         Handler: lambda_function.lambda_handler
         Role: !GetAtt SearchPhotosRole.Arn
         Runtime: python3.7
-        FunctionName: search-photos
         Timeout: 300
         TracingConfig:
             Mode: Active
-
+  
   #PermissionForAPIToLF2
   PermissionForAPIToLF2:
     Type: "AWS::Lambda::Permission"
@@ -184,3 +193,39 @@ Resources:
       SourceAccount: !Ref "AWS::AccountId"
       SourceArn: "arn:aws:s3:::storephotos-ansh1"
 
+  # #Elastic Search
+  # ES:
+  #   Type: AWS::Elasticsearch::Domain
+  #   Properties:
+  #     DomainName: 'photo-new'
+  #     AccessPolicies:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         - Effect: 'Allow'
+  #           Principal:
+  #             AWS: '*'
+  #           Action: 'es:*'
+  #           Resource: 'arn:aws:es:us-east-1:942877294827:domain/photos/*'
+  #     EncryptionAtRestOptions:
+  #       Enabled: true
+  #     NodeToNodeEncryptionOptions:
+  #       Enabled: true
+  #     AdvancedSecurityOptions:
+  #       Enabled: true
+  #       InternalUserDatabaseEnabled: true
+  #       MasterUserOptions:
+  #         MasterUserName: cloud9223
+  #         MasterUserPassword: Nik@3174
+  #     DomainEndpointOptions:
+  #         EnforceHTTPS: true
+  #     ElasticsearchClusterConfig:
+  #       DedicatedMasterEnabled: 'false'
+  #       InstanceCount: '1'
+  #       ZoneAwarenessEnabled: 'false'
+  #       InstanceType: 't3.small.elasticsearch'
+  #     EBSOptions:
+  #       EBSEnabled: true
+  #       Iops: 0
+  #       VolumeSize: 10
+  #       VolumeType: 'gp2'
+  #     ElasticsearchVersion: '7.1'
