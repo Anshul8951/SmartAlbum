@@ -12,7 +12,7 @@ Resources:
         WebsiteConfiguration:
           IndexDocument: index.html
 
-# Photos bucket
+# Photos buckets
   S3BUCKET2:
     Type: 'AWS::S3::Bucket'
     Properties: 
