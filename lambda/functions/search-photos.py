@@ -15,7 +15,7 @@ def push_to_lex(query):
         inputText=query
     )
 
-    print("test changes new")
+    print("test changes new code pipeline")
     print("lex-response", response)
     labels = []
     if 'slots' not in response:
