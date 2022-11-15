@@ -10,17 +10,13 @@ phases:
   build:
     commands:
       - echo "Zipping deployment package...."
-      - mv lambda/functions/search-photos.py lambda_function.py
-      - zip -g deployment_package_1.zip lambda_function.py
-      - mv lambda_function.py search-photos.py
-      - mv lambda/functions/index-photos.py lambda_function.py
-      - zip -g deployment_package_2.zip lambda_function.py
-      - mv lambda_function.py index-photos.py
+      - zip -g deployment_package_1.zip lambda/search-photos/lambda_function.py
+      - zip -g deployment_package_2.zip lambda/index-photos/lambda_function.py
 
   post_build:
     commands:
       - echo "Updating lambda Functions..."
-      - aws lambda update-function-code --function-name SearchPhotosLF2 --zip-file fileb://deployment_package_1.zip
+      - aws lambda update-function-code --function-name SearchPhotosLF2g --zip-file fileb://deployment_package_1.zip
       - aws lambda update-function-code --function-name IndexPhotosLF1 --zip-file fileb://deployment_package_2.zip
       - echo "DONE!!"
 artifacts:
