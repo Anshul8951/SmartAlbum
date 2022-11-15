@@ -8,8 +8,8 @@ def push_to_lex(query):
     lex = boto3.client('lexv2-runtime')
     print("lex client initialized")
     response = lex.recognize_text(
-        botId = 'AJVYQ4OPGL',
-        botAliasId = 'TSTALIASID',
+        botId = 'ILOO46TTNY',
+        botAliasId = 'TND07SJU8W',
         localeId = 'en_US',
         sessionId = "root",
         text = query
