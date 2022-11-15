@@ -89,7 +89,7 @@ Lambda Role with policies for function IndexPhotosLambda
       Properties:
           Code:
               S3Bucket: 'cloudformation-lexlambda-ansh'
-              S3Key: 'index-photos/lambda_function.zip'
+              S3Key: 'index-photos.zip'
           Handler: lambda_function.lambda_handler
           Role: !GetAtt IndexPhotosRole.Arn
           Runtime: python3.7
@@ -104,7 +104,7 @@ Lambda Role with policies for function IndexPhotosLambda
     Properties:
         Code:
             S3Bucket: 'cloudformation-lexlambda-ansh'
-            S3Key: 'search-photos/lambda_function.zip'
+            S3Key: 'search-photos.zip'
         Handler: lambda_function.lambda_handler
         Role: !GetAtt SearchPhotosRole.Arn
         Runtime: python3.7
