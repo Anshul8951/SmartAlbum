@@ -4,7 +4,7 @@ Description: Lambda functions using Cloud formation
 
 
 Resources:
-Lambda Role with policies for function IndexPhotosLambda
+#Lambda Role with policies for function IndexPhotosLambda
   IndexPhotosRole:
             Type: "AWS::IAM::Role"
             Properties:
