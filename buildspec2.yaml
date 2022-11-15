@@ -12,7 +12,8 @@ phases:
       - echo "Zipping deployment package...."
       - cd lambda/search-photos
       - zip -g deployment_package_1.zip lambda_function.py
-      - cd ..
+      - cd ../..
+      - ls
       - cd lambda/index-photos
       - zip -g deployment_package_2.zip lambda_function.py
 
