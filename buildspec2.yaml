@@ -10,12 +10,12 @@ phases:
   build:
     commands:
       - echo "Zipping deployment package...."
-      - cd lambda/search-photos
+      - mv lambda/search-photos/lambda_function.py lambda_function.py
       - zip -g deployment_package_1.zip lambda_function.py
-      - cd ../..
-      - ls
-      - cd lambda/index-photos
+      - mv lambda_function.py lambda/search-photos/lambda_function.py
+      - mv lambda/index-photos/lambda_function.py lambda_function.py
       - zip -g deployment_package_2.zip lambda_function.py
+      - mv lambda_function.py lambda/index-photos/lambda_function.py
 
   post_build:
     commands:
