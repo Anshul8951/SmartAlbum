@@ -4,7 +4,7 @@ import requests
 import inflect
 
 def push_to_lex(query):
-    #added old comment 1 for checking
+    #added old comment 1 for checking pipeline
     lex = boto3.client('lexv2-runtime')
     print("lex client initialized")
     response = lex.recognize_text(
