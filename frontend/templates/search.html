@@ -97,33 +97,6 @@
             inputSearchQuery.value = transcript;
             console.log("transcript : ", transcript)
         }
-
-
-        // window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-    
-        // let finalTranscript = '';
-        // let recognition = new window.SpeechRecognition();
-    
-        // recognition.interimResults = true;
-        // recognition.maxAlternatives = 10;
-        // recognition.continuous = true;
-    
-        // recognition.onresult = (event) => {
-        //   let interimTranscript = '';
-        //   for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
-        //     let transcript = event.results[i][0].transcript;
-        //     if (event.results[i].isFinal) {
-        //       finalTranscript += transcript;
-        //     } else {
-        //       interimTranscript += transcript;
-        //     }
-        //   }
-        //   document.getElementById('myQuery').value = finalTranscript + interimTranscript;
-        // }
-        // recognition.onaudioend = () => {
-        //     console.log('Audio capturing ended');
-        // }
-        // recognition.start();
       }
 
       
@@ -132,14 +105,15 @@
         'headers': {
             'Access-Control-Allow-Headers' : '*',
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT'
+            'Access-Control-Allow-Methods': 'GET,OPTIONS'
         },
-        accessKey: 'AKIAXDVKW4VN6CVGUYHC',
-        secretKey: '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',
+        // accessKey: 'AKIAXDVKW4VN6CVGUYHC',
+        // secretKey: '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',
+        apiKey : 'VVFID0WFkw28B7nZNV8jd3ovQ6PcWmWK9jBdRkVC'
       });
 
       // var sdk = apigClientFactory.newClient({
-      //   apiKey : 'nhNBzS6ZfU0Hq7fc48QT9sBAIooyNwGaOGA3cDUh'
+      //   apiKey : 'VVFID0WFkw28B7nZNV8jd3ovQ6PcWmWK9jBdRkVC'
       // });
     
 
@@ -192,7 +166,6 @@
       btn.addEventListener('click', async (event) => {
         console.log("inside event listener");
         await search();
-        //await fetchAsync("https://ggehfe7tvf.execute-api.us-east-1.amazonaws.com/dev/search?q=Show%20me%20cat")
       });
     
     </script>

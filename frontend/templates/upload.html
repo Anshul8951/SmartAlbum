@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="../static/styles.css">
+</head>
+
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/axios/dist/axios.standalone.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/CryptoJS/rollups/hmac-sha256.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/CryptoJS/rollups/sha256.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/CryptoJS/components/hmac.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/CryptoJS/components/enc-base64.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/url-template/url-template.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/apiGatewayCore/sigV4Client.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/apiGatewayCore/apiGatewayClient.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/apiGatewayCore/simpleHttpClient.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/lib/apiGatewayCore/utils.js"></script>
+<script type="text/javascript" src="../apiGateway-js-sdk/apigClient.js"></script>
+
+
+<body>
+
+    <div class="topnav">
+        <a href="welcome.html">Home</a>
+        <a href="search.html">Search</a>
+        <a class="active" href="upload.html">Upload</a>
+    </div>   
+
+    <div class="welcome center">Upload</div>
+
+      <div class="feedcontainer">
+
+        <label for="upload"><b>Select Image to Upload</b></label>
+        <br>
+        <br>
+        
+        <input type="file" id="myFile" name="filename" required>
+        <br>
+        <br>
+        <hr>
+        <br>
+        
+        <label for="keywords"><b>Optional: Custom Keywords</b></label>
+        <input type="text" id="myKeywords" name="keywords">
+
+        <button id="myUploadButton" >Upload</button>
+      </div>
+      
+    <script>
+        
+      function upload() {
+
+        var filename = document.getElementById('myFile').files[0];
+
+        var data = filename;
+    
+        var xhr = new XMLHttpRequest();
+        xhr.withCredentials = false;
+    
+        xhr.addEventListener("readystatechange", function() {
+          if(this.readyState === 4) {
+            console.log(this.responseText);
+          }
+        });
+    
+        var contentType = "image/";
+        const myArray = filename['name'].split(".");
+        if (myArray.list > 1) {
+          contentType += myArray[1];
+        } else {
+          contentType += 'jpeg';
+        }
+
+        console.log(keywords.value)
+       
+        xhr.open("PUT", "https://g4btwds344.execute-api.us-east-1.amazonaws.com/v1/upload/photosalbumb21/" + filename['name']);
+        xhr.setRequestHeader("x-amz-meta-customLabels", keywords.value);
+        xhr.setRequestHeader("Content-Type", filename.type);
+        xhr.setRequestHeader("Access-Control-Allow-Headers", '*');
+        xhr.setRequestHeader("Access-Control-Allow-Origin", '*');
+        xhr.setRequestHeader("Access-Control-Allow-Methods", 'OPTIONS, PUT');
+    
+        xhr.send(data);
+        
+      }
+    
+      let btn = document.getElementById("myUploadButton")
+      console.log("btn", btn);
+      let keywords = document.getElementById("myKeywords")
+      console.log("keywords", keywords);
+      
+      btn.addEventListener('click', event => {
+        console.log("inside event listener");
+        upload();
+      });
+    </script>
+
+</body>

@@ -56,7 +56,7 @@ def store_json_elastic_search(json_object):
     print("Entered")
     print("credentials ", credentials)
     
-    host = 'https://search-photos-4xczjcwzga47g5txcwnch6vy5i.us-east-1.es.amazonaws.com/'
+    host = 'https://search-photos-ouj7lbnotviwpf46xyx4nfzcni.us-east-1.es.amazonaws.com/'
     index = 'photos'
     url = host + index + '/doc'
     headers = {"Content-Type": "application/json"}
@@ -64,7 +64,7 @@ def store_json_elastic_search(json_object):
     #url2= 'https://search-photos-xxxxxxxxxxxxx.us-east-1.es.amazonaws.com/'
     
     print("Dumping")
-    resp = requests.post(url,auth=('admin', 'Admin@1234'), data = json.dumps(json_object),headers = headers)
+    resp = requests.post(url,auth=('master_user', 'Suits1998*'), data = json.dumps(json_object),headers = headers)
     pritn("Dumped")
     #url2 = 'https://vpc-photos-texbo7x2mjorrx3njqrmkiacha.us-east-1.es.amazonaws.com/photos/_search?pretty=true&q=*:*'
     #resp_elastic = requests.get(url2,auth=awsauth,headers={"Content-Type": "application/json"}).json()

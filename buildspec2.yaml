@@ -5,7 +5,7 @@ phases:
       python: 3.7
     commands:
       - echo "Installing dependencies..."
-      - aws cloudformation package --template-file lambda-cf.yaml --s3-bucket cloudformation-lexlambda-ansh --output-template-file output2.yaml
+      #- aws cloudformation package --template-file lambda-cf.yaml --s3-bucket cloudformation-lexlambda-ansh --output-template-file output2.yaml
       
   build:
     commands:
@@ -20,8 +20,8 @@ phases:
   post_build:
     commands:
       - echo "Updating lambda Functions..."
-      - aws lambda update-function-code --function-name search-photos --zip-file fileb://deployment_package_1.zip
-      - aws lambda update-function-code --function-name index-photos --zip-file fileb://deployment_package_2.zip
+      - aws lambda update-function-code --function-name SearchPhotosLF2 --zip-file fileb://deployment_package_1.zip
+      - aws lambda update-function-code --function-name IndexPhotosLF1 --zip-file fileb://deployment_package_2.zip
       - echo "DONE!!"
 artifacts:
   type: zip

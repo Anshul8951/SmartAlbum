@@ -2,6 +2,19 @@ AWSTemplateFormatVersion: 2010-09-09
 Transform: "AWS::Serverless-2016-10-31"
 Description: P1
 
+Parameters:
+  GitHubRepo:
+    Type: String
+
+  GitHubBranch:
+    Type: String
+
+  GitHubToken:
+    Type: String
+
+  GitHubUser:
+    Type: String
+
 Resources:
   photosalbumb21:
     Type: AWS::S3::Bucket
@@ -12,6 +25,9 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: photosalbumb11
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: templates/welcome.html
 
   LambdaExecutionRoleLF1:
     Type: "AWS::IAM::Role"
@@ -29,6 +45,9 @@ Resources:
       Path: "/"
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - "arn:aws:iam::aws:policy/AmazonLexFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonOpenSearchServiceFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
       Policies:
         - PolicyName: "LambdaLF1Policy"
           PolicyDocument:
@@ -56,7 +75,7 @@ Resources:
       FunctionName: IndexPhotosLF1
       Handler: lambda_function.lambda_handler
       Runtime: python3.7
-      CodeUri: s3://cloudformation-lexlambda-ansh/index-photos.zip
+      CodeUri: s3://cloudformation-lexlambda-ansh/index-photos/lambda_function.zip
       Description: LF1
       MemorySize: 128
       Timeout: 30
@@ -77,11 +96,10 @@ Resources:
   SearchPhotosLF2:
     Type: "AWS::Serverless::Function"
     Properties:
-      # DependsOn: LambdaExecutionRoleLF1
       FunctionName: SearchPhotosLF2
       Handler: lambda_function.lambda_handler
       Runtime: python3.7
-      CodeUri: s3://cloudformation-lexlambda-ansh/search-photos.zip
+      CodeUri: s3://cloudformation-lexlambda-ansh/search-photos/lambda_function.zip
       Description: LF2
       MemorySize: 128
       Timeout: 30
@@ -89,6 +107,7 @@ Resources:
       Layers:
       - arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p38-requests:7
       - arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p38-opensearch-py:6
+      - arn:aws:lambda:us-east-1:646268851640:layer:inflect-layer:1
       Environment:
         Variables:
           Region: us-east-1
@@ -129,41 +148,41 @@ Resources:
       SourceArn: "arn:aws:s3:::photosalbumb21"
 
  
-  # ES:
-  #   Type: "AWS::Elasticsearch::Domain"
-  #   Properties:
-  #     DomainName: "photos"
-  #     DomainEndpointOptions:
-  #       EnforceHTTPS : true
-  #     EncryptionAtRestOptions:
-  #       Enabled: true
-  #     NodeToNodeEncryptionOptions:
-  #       Enabled: true
-  #     AdvancedSecurityOptions:
-  #       Enabled: true
-  #       InternalUserDatabaseEnabled: true
-  #       MasterUserOptions:
-  #         MasterUserName: "master_user"
-  #         MasterUserPassword: "Suits1998*"
-  #     AccessPolicies:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: "Allow"
-  #           Principal:
-  #             AWS: "*"
-  #           Action: "es:*"
-  #           Resource: "arn:aws:es:us-east-1:824208337648:domain/photos/*"
-  #     ElasticsearchClusterConfig:
-  #       DedicatedMasterEnabled: "false"
-  #       InstanceCount: "1"
-  #       ZoneAwarenessEnabled: "false"
-  #       InstanceType: "t3.small.elasticsearch"
-  #     EBSOptions:
-  #       EBSEnabled: true
-  #       Iops: 0
-  #       VolumeSize: 10
-  #       VolumeType: "gp2"
-  #     ElasticsearchVersion: "7.1"
+  ES:
+    Type: "AWS::Elasticsearch::Domain"
+    Properties:
+      DomainName: "photos"
+      DomainEndpointOptions:
+        EnforceHTTPS : true
+      EncryptionAtRestOptions:
+        Enabled: true
+      NodeToNodeEncryptionOptions:
+        Enabled: true
+      AdvancedSecurityOptions:
+        Enabled: true
+        InternalUserDatabaseEnabled: true
+        MasterUserOptions:
+          MasterUserName: "master_user"
+          MasterUserPassword: "Suits1998*"
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: "*"
+            Action: "es:*"
+            Resource: "arn:aws:es:us-east-1:646268851640:domain/photos/*"
+      ElasticsearchClusterConfig:
+        DedicatedMasterEnabled: "false"
+        InstanceCount: "1"
+        ZoneAwarenessEnabled: "false"
+        InstanceType: "t3.small.elasticsearch"
+      EBSOptions:
+        EBSEnabled: true
+        Iops: 0
+        VolumeSize: 10
+        VolumeType: "gp2"
+      ElasticsearchVersion: "7.1"
 
   RestApiPhotoAlbumDeployment:
     Type: AWS::ApiGateway::Deployment
@@ -172,3 +191,514 @@ Resources:
       Description: The v1 deployment of photo album api
       RestApiId: !Ref RestApiPhotoAlbum
       StageName: v1
+  
+  #Lex Bot - SmartAlbum
+  # 1. IAM Role used by the Lex service to make runtime calls
+  BotRuntimeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lex.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: LexRuntimeRolePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "polly:SynthesizeSpeech"
+                  - "comprehend:DetectSentiment"
+                Resource: "*"
+ 
+  # 2. Inline bot definition that depends on the IAM role.
+  # The bot definition consists of combining all the child resources into one CFN resource.
+  # This includes Locales, Intents, Slots, and SlotTypes.
+  SmartAlbumBot:
+    DependsOn: BotRuntimeRole
+    Type: AWS::Lex::Bot
+    Properties:
+      Name: "SmartAlbumWithCFN"
+      RoleArn: !GetAtt BotRuntimeRole.Arn
+      DataPrivacy:
+        ChildDirected: false
+      IdleSessionTTLInSeconds: 300
+      Description: "Create a SmartAlbum bot with CFN"
+      AutoBuildBotLocales: false
+      BotLocales:
+        - LocaleId: "en_US"
+          Description: "Get key values from a bot Locale"
+          NluConfidenceThreshold: 0.40
+          VoiceSettings:
+            VoiceId: "Ivy"
+          SlotTypes:
+            - Name: "queryPhrase"
+              Description: "Keys to be extracted"
+              SlotTypeValues:
+                - SampleValue:
+                    Value: tree
+                - SampleValue:
+                    Value: cat
+                - SampleValue:
+                    Value: outdoor
+                - SampleValue:
+                    Value: birds
+              ValueSelectionSetting:
+                ResolutionStrategy: ORIGINAL_VALUE
+          Intents:
+            - Name: "searchPhoto"
+              Description: "Intent to search photos with query key values"
+              SampleUtterances:
+                - Utterance: "Show me {querya}"
+                - Utterance: "Show me {querya} and {queryb}"
+                - Utterance: "Show pictures of {querya}"
+                - Utterance: "Show pictures of {querya} and {queryb}"
+                - Utterance: "{querya}"
+
+              SlotPriorities:
+                - Priority: 2
+                  SlotName: queryb
+                - Priority: 1
+                  SlotName: querya
+
+              Slots:
+                - Name: "querya"
+                  Description: "First Keyword"
+                  SlotTypeName: "queryPhrase"
+                  ValueElicitationSetting:
+                    SlotConstraint: "Required"
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: "What pic would you like to see?"
+                      MaxRetries: 3
+                      AllowInterrupt: false
+                - Name: "queryb"
+                  Description: "Second Keyword"
+                  SlotTypeName: "queryPhrase"
+                  ValueElicitationSetting:
+                    SlotConstraint: "Optional"
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: "What 2nd pic would you like to see?"
+                      MaxRetries: 3
+                      AllowInterrupt: false
+                
+            - Name: "FallbackIntent"
+              Description: "Default intent when no other intent matches"
+              ParentIntentSignature: "AMAZON.FallbackIntent"
+ 
+  # 3. Define a bot version that depends on the DRAFT version of the Lex Bot.
+  SmartAlbumBotVersionWithCFN:
+    DependsOn: SmartAlbumBot
+    Type: AWS::Lex::BotVersion
+    Properties:
+      BotId: !Ref SmartAlbumBot
+      BotVersionLocaleSpecification:
+        - LocaleId: en_US
+          BotVersionLocaleDetails:
+            SourceBotVersion: DRAFT
+      Description: SmartAlbum Bot Version
+ 
+  # 4. Define the alias by providing the bot version created by the 
+  #    AWS::Lex::BotVersion resource above.
+  SmartAlbumBotAliasWithCFN:
+    DependsOn: SmartAlbumBotVersionWithCFN
+    Type: AWS::Lex::BotAlias
+    Properties:
+      BotId: !Ref SmartAlbumBot
+      BotAliasName: "SmartAlbumBotAlias"
+      BotVersion: !GetAtt SmartAlbumBotVersionWithCFN.BotVersion
+      SentimentAnalysisSettings:
+        DetectSentiment: false
+
+  #####P1 - update lambdas
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument: |
+        {
+            "Statement": [{
+                "Effect": "Allow",
+                "Principal": { "Service": [ "codebuild.amazonaws.com" ]},
+                "Action": [ "sts:AssumeRole" ]
+            }]
+        }
+      Policies:
+        - PolicyName: client-code-build-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+              - Resource:
+                  - !Sub arn:aws:s3:::${photosalbumb21}/*
+                  - !Sub arn:aws:s3:::${photosalbumb11}/*
+                  - !Sub arn:aws:s3:::${photosalbumb11}
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - s3:ListAllMyBuckets
+                  - s3:ListObjects
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - lambda:*
+
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument: |
+        {
+            "Statement": [{
+                "Effect": "Allow",
+                "Principal": { "Service": [ "codepipeline.amazonaws.com" ]},
+                "Action": [ "sts:AssumeRole" ]
+            }]
+        }
+      Policies:
+        - PolicyName: code-pipeline-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Resource:
+                  - !Sub arn:aws:s3:::${photosalbumb21}/*
+                  - !Sub arn:aws:s3:::${photosalbumb11}/*
+                  - !Sub arn:aws:s3:::${photosalbumb11}
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+                  - s3:ListObjects
+              - Resource:
+                  - arn:aws:s3:::*
+                Effect: Allow
+                Action:
+                  - s3:ListAllMyBuckets
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                  - iam:PassRole
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - lambda:*
+
+  ClientBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: "CODEPIPELINE"
+      Source:
+        Type: "CODEPIPELINE"
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.7
+              commands:
+                - echo "Installing dependencies..."
+                - aws cloudformation package --template-file lambda-cf.yaml --s3-bucket cloudformation-lexlambda-ansh --output-template-file output2.yaml
+                
+              build:
+                commands:
+                  - echo "Zipping deployment package..."
+                  - mv search-photos.py lambda_function.py
+                  - zip -g deployment_package_1.zip lambda_function.py
+                  - mv lambda_function.py search-photos.py
+                  - mv index-photos.py lambda_function.py
+                  - zip -g deployment_package_2.zip lambda_function.py
+                  - mv lambda_function.py index-photos.py
+
+              post_build:
+                commands:
+                  - echo "Updating lambda Functions..."
+                  - aws lambda update-function-code --function-name search-photos --zip-file fileb://deployment_package_1.zip
+                  - aws lambda update-function-code --function-name index-photos --zip-file fileb://deployment_package_2.zip
+                  - echo "DONE!!"
+              artifacts:
+                type: zip
+                files:
+                  - lambda-cf.yaml
+                  - output2.yaml
+      Environment:
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+        Type: "LINUX_CONTAINER"
+        EnvironmentVariables:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: PUBLIC_URL
+            Value: '/'
+      Name: !Sub my-project-build-client
+      ServiceRole: !Ref CodeBuildServiceRole
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref photosalbumb11
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: App
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: 1
+                Provider: GitHub
+              Configuration:
+                Owner: !Ref GitHubUser
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                OAuthToken: !Ref GitHubToken
+              OutputArtifacts:
+                - Name: App
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: ClientBuildStep
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref ClientBuildProject
+              InputArtifacts:
+                - Name: App
+              OutputArtifacts:
+                - Name: ClientBuild
+              RunOrder: 1
+        - Name: Deploy
+          Actions:
+            # - Name: ClientDeployStep
+            #   ActionTypeId:
+            #     Category: Build
+            #     Owner: AWS
+            #     Version: 1
+            #     Provider: CodeBuild
+            #   Configuration:
+            #     ProjectName: !Ref DeployClientBuildProject
+            #   InputArtifacts:
+            #     - Name: ClientBuild
+            #   OutputArtifacts:
+            #     - Name: ClientDeploymentOutput
+            #   RunOrder: 1
+            - Name: ExecuteChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              RunOrder: 2
+              Configuration:
+                ActionMode: CHANGE_SET_EXECUTE
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+                ChangeSetName: pipeline-changeset
+                #ParameterOverrides: '{"ProjectId": "my-project","CodeDeployRole": "CodeDeploy_Role_ARN"}'
+                RoleArn: arn:aws:iam::693126959687:role/service-role/codebuild-create-all-p3-service-role #What needs to be done here?
+                StackName: ${AWS::StackName}
+                #TemplateConfiguration: 'my-project--BuildArtifact::template-configuration.json'
+                TemplatePath: 'ClientBuild::lambda-cf.yaml'
+              OutputArtifacts: []
+              InputArtifacts:
+                - Name: ClientBuild
+
+
+  ###################################
+  ### P2- frontend yaml
+  CodeBuildServiceRole2:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument: |
+        {
+            "Statement": [{
+                "Effect": "Allow",
+                "Principal": { "Service": [ "codebuild.amazonaws.com" ]},
+                "Action": [ "sts:AssumeRole" ]
+            }]
+        }
+      Policies:
+        - PolicyName: client-code-build-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+              - Resource:
+                  - !Sub arn:aws:s3:::${photosalbumb21}/*
+                  - !Sub arn:aws:s3:::${photosalbumb11}/*
+                  - !Sub arn:aws:s3:::${photosalbumb11}
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - s3:ListAllMyBuckets
+                  - s3:ListObjects
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - lambda:*
+
+  CodePipelineServiceRole2:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument: |
+        {
+            "Statement": [{
+                "Effect": "Allow",
+                "Principal": { "Service": [ "codepipeline.amazonaws.com" ]},
+                "Action": [ "sts:AssumeRole" ]
+            }]
+        }
+      Policies:
+        - PolicyName: code-pipeline-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Resource:
+                  - !Sub arn:aws:s3:::${photosalbumb21}/*
+                  - !Sub arn:aws:s3:::${photosalbumb11}/*
+                  - !Sub arn:aws:s3:::${photosalbumb11}
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+                  - s3:ListObjects
+              - Resource:
+                  - arn:aws:s3:::*
+                Effect: Allow
+                Action:
+                  - s3:ListAllMyBuckets
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                  - iam:PassRole
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - lambda:*
+
+  ClientBuildProject2:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: "CODEPIPELINE"
+      Source:
+        Type: "CODEPIPELINE"
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              commands:
+                - echo "install step"
+            pre_build:
+              commands:
+                - echo "pre_build step"
+            build:
+              commands:
+                - aws s3 sync ./frontend/ "s3://photosalbumb11/"
+            post_build:
+              commands:
+                - echo "post_build step"
+      Environment:
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+        Type: "LINUX_CONTAINER"
+        EnvironmentVariables:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: PUBLIC_URL
+            Value: '/'
+      Name: !Sub ${AWS::StackName}-build-client
+      ServiceRole: !Ref CodeBuildServiceRole2
+
+
+  Pipeline2:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole2.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref photosalbumb11
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: App
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: 1
+                Provider: GitHub
+              Configuration:
+                Owner: !Ref GitHubUser
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                OAuthToken: !Ref GitHubToken
+              OutputArtifacts:
+                - Name: App
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: ClientBuildStep
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref ClientBuildProject2
+              InputArtifacts:
+                - Name: App
+              OutputArtifacts:
+                - Name: ClientBuild
+              RunOrder: 1

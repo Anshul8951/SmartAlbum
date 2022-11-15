@@ -53,7 +53,7 @@ apigClientFactory.newClient = function (config) {
 
     
     // extract endpoint and path from url
-    var invokeUrl = 'https://l590a4rc8f.execute-api.us-east-1.amazonaws.com/dev';
+    var invokeUrl = 'https://g4btwds344.execute-api.us-east-1.amazonaws.com/v1';
     var endpoint = /(^https?:\/\/[^\/]+)/g.exec(invokeUrl)[1];
     var pathComponent = invokeUrl.substring(endpoint.length);
 
@@ -122,12 +122,12 @@ apigClientFactory.newClient = function (config) {
     apigClient.uploadBucketKeyPut = function (params, body, additionalParams) {
         if(additionalParams === undefined) { additionalParams = {}; }
         
-        apiGateway.core.utils.assertParametersDefined(params, ['Access-Control-Allow-Origin', 'key', 'bucket', 'Content-Type', 'Accept', 'x-amz-meta-customLabels'], ['body']);
+        apiGateway.core.utils.assertParametersDefined(params, ['Content-Type', 'key', 'bucket', 'x-amz-meta-customLabels'], ['body']);
         
         var uploadBucketKeyPutRequest = {
             verb: 'put'.toUpperCase(),
             path: pathComponent + uritemplate('/upload/{bucket}/{key}').expand(apiGateway.core.utils.parseParametersToObject(params, ['key', 'bucket', ])),
-            headers: apiGateway.core.utils.parseParametersToObject(params, ['Access-Control-Allow-Origin', 'Content-Type', 'Accept', 'x-amz-meta-customLabels']),
+            headers: apiGateway.core.utils.parseParametersToObject(params, ['Content-Type', 'x-amz-meta-customLabels']),
             queryParams: apiGateway.core.utils.parseParametersToObject(params, []),
             body: body
         };
@@ -140,12 +140,12 @@ apigClientFactory.newClient = function (config) {
     apigClient.uploadBucketKeyOptions = function (params, body, additionalParams) {
         if(additionalParams === undefined) { additionalParams = {}; }
         
-        apiGateway.core.utils.assertParametersDefined(params, ['Access-Control-Allow-Origin', 'key', 'bucket', 'Access-Control-Allow-Headers', 'Access-Control-Allow-Methods'], ['body']);
+        apiGateway.core.utils.assertParametersDefined(params, ['key', 'bucket', 'Access-Control-Allow-Origin'], ['body']);
         
         var uploadBucketKeyOptionsRequest = {
             verb: 'options'.toUpperCase(),
             path: pathComponent + uritemplate('/upload/{bucket}/{key}').expand(apiGateway.core.utils.parseParametersToObject(params, ['key', 'bucket', ])),
-            headers: apiGateway.core.utils.parseParametersToObject(params, ['Access-Control-Allow-Origin', 'Access-Control-Allow-Headers', 'Access-Control-Allow-Methods']),
+            headers: apiGateway.core.utils.parseParametersToObject(params, ['Access-Control-Allow-Origin']),
             queryParams: apiGateway.core.utils.parseParametersToObject(params, []),
             body: body
         };

@@ -2,30 +2,33 @@ import json
 import boto3
 import requests
 import inflect
-#from requests_aws4auth import AWS4Auth
 
 def push_to_lex(query):
     #added old comment 1 for checking
-    lex = boto3.client('lex-runtime')
+    lex = boto3.client('lexv2-runtime')
     print("lex client initialized")
-    response = lex.post_text(
-        botName='smartAlbum',                 
-        botAlias='smartAlbum',
-        userId='root',           
-        inputText=query
+    response = lex.recognize_text(
+        botId = 'AJVYQ4OPGL',
+        botAliasId = 'TSTALIASID',
+        localeId = 'en_US',
+        sessionId = "root",
+        text = query
     )
 
-    print("test changes new code pipeline")
     print("lex-response", response)
+    
+    val1 = response['sessionState']['intent']['slots']['querya']
+    val2 = response['sessionState']['intent']['slots']['queryb']
     labels = []
-    if 'slots' not in response:
+    
+    if(val1 != None):
+        labels.append(val1['value']['interpretedValue'])
+    if(val2 != None):
+        labels.append(val2['value']['interpretedValue'])
+    
+    if len(labels) == 0:
         print("No photo collection for query {}".format(query))
-    else:
-        print ("slot: ",response['slots'])
-        slot_val = response['slots']
-        for key,value in slot_val.items():
-            if value!=None:
-                labels.append(value)
+    
     return labels
 
 
@@ -35,7 +38,8 @@ def search_elastic_search(labels):
     service = 'es'
     credentials = boto3.Session().get_credentials()
     #awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, region, service, session_token=credentials.token)
-    url = 'https://search-photos-4xczjcwzga47g5txcwnch6vy5i.us-east-1.es.amazonaws.com/photos/_search?q='
+    url = 'https://search-photos-ouj7lbnotviwpf46xyx4nfzcni.us-east-1.es.amazonaws.com/photos/_search?q='
+    
 
     resp = []
     for label in labels:
@@ -43,10 +47,10 @@ def search_elastic_search(labels):
             url2 = url+label
             print(label)
             print(url2)
-            resp.append(requests.get(url2, auth=('admin', 'Admin@1234')).json())
+            resp.append(requests.get(url2, auth=('master_user', 'Suits1998*')).json())
     print ("RESPONSE" , resp)
     output = []
-    bucket_url = "https://store-photos-b2.s3.amazonaws.com/"
+    bucket_url = "https://photosalbumb21.s3.amazonaws.com/"
     for r in resp:
         if 'hits' in r:
              for val in r['hits']['hits']:
