@@ -47,7 +47,7 @@ def search_elastic_search(labels):
             url2 = url+label
             print(label)
             print(url2)
-            resp.append(requests.get(url2, auth=('admin', 'Admin@1234')).json())
+            resp.append(requests.get(url2, auth=('master_user', 'Suits1998*')).json())
     print ("RESPONSE" , resp)
     output = []
     bucket_url = "https://photosalbumb21.s3.amazonaws.com/"
